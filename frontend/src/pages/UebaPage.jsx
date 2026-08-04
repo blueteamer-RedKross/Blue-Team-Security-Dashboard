@@ -6,11 +6,6 @@ import Table from '../components/ui/Table';
 import TrendChart from '../components/charts/TrendChart';
 import Skeleton from '../components/ui/Skeleton';
 
-const riskCards = [
-  { title: 'Insider risk', value: '72', label: 'Moderate', accent: 'orange' },
-  { title: 'Behavior anomalies', value: '18', label: 'High', accent: 'red' },
-  { title: 'Login risk', value: '34', label: 'Normal', accent: 'blue' },
-];
 
 const anomalies = [
   { user: 'm.salazar', reason: 'Unusual download pattern', severity: 'High' },
@@ -36,11 +31,53 @@ const lineData = [
 
 export default function UebaPage() {
   const [loading, setLoading] = useState(true);
+  const [activities, setActivities] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 300);
-    return () => clearTimeout(timer);
+    async function loadActivities() {
+      try {
+        const res = await fetch("http://localhost:5000/api/ueba/activities");
+        const data = await res.json();
+
+        setActivities(data);
+      } catch (err) {
+        console.error(err);
+      }
+
+      setLoading(false);
+    }
+
+    loadActivities();
   }, []);
+
+  const totalActivities = activities.length;
+
+  const highRisk = activities.filter(a => a.riskScore >= 60).length;
+
+  const failedLogins = activities.filter(
+    a => a.activity === "Failed Login"
+  ).length;
+
+  const riskCards = [
+    {
+      title: "Total Activities",
+      value: totalActivities,
+      label: "All Events",
+      accent: "blue",
+    },
+    {
+      title: "High Risk",
+      value: highRisk,
+      label: "Risk >= 60",
+      accent: "red",
+    },
+    {
+      title: "Failed Logins",
+      value: failedLogins,
+      label: "Detected",
+      accent: "orange",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -89,29 +126,57 @@ export default function UebaPage() {
         <Card title="Anomaly detection" subtitle="User behavior analysis">
           <Table
             columns={[
-              { key: 'user', label: 'User' },
-              { key: 'reason', label: 'Reason' },
-              { key: 'severity', label: 'Severity', render: (row) => <Badge color={row.severity === 'Critical' ? 'red' : row.severity === 'High' ? 'orange' : 'yellow'}>{row.severity}</Badge> },
+              {
+                key: "username",
+                label: "User",
+              },
+              {
+                key: "activity",
+                label: "Activity",
+              },
+              {
+                key: "riskScore",
+                label: "Risk Score",
+                render: (row) => (
+                  <Badge
+                    color={
+                      row.riskScore >= 100
+                        ? "red"
+                        : row.riskScore >= 60
+                        ? "orange"
+                        : "green"
+                    }
+                  >
+                    {row.riskScore}
+                  </Badge>
+                ),
+              },
             ]}
-            data={anomalies}
+            data={activities}
           />
         </Card>
         <Card title="Login timeline" subtitle="Recent authentication events">
           <div className="space-y-4">
-            {timeline.map((entry, index) => (
-              <div key={index} className="rounded-[20px] border border-border bg-[#0f1728] p-4">
-                <div className="flex items-center justify-between gap-4">
+            {activities.slice(0, 8).map((entry) => (
+              <div
+                key={entry._id}
+                className="rounded-[20px] border border-border bg-[#0f1728] p-4"
+              >
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-semibold text-white">{entry.event}</p>
-                    <p className="mt-1 text-sm text-slate-400">{entry.time}</p>
+                    <p className="text-white font-semibold">
+                      {entry.activity}
+                    </p>
+
+                    <p className="text-sm text-slate-400">
+                      {new Date(entry.timestamp).toLocaleString()}
+                    </p>
                   </div>
-                  <Badge color={entry.status === 'Investigating' ? 'orange' : 'green'}>{entry.status}</Badge>
                 </div>
               </div>
             ))}
           </div>
-        </Card>
+        </Card> 
       </div>
     </div>
-  );
-}
+)}
