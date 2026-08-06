@@ -27,7 +27,26 @@ const threats = [
 ];
 
 export default function AntivirusPage() {
+  const [scanStatus, setScanStatus] = useState("Idle");
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanResult, setScanResult] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const handleQuickScan = async () => {
+    console.log("Quick Scan Started");
+  };
+
+  const handleFullScan = async () => {
+    console.log("Full Scan Started");
+  };
+
+  const handleCustomScan = async () => {
+    console.log("Custom Scan Started");
+  };
+
+  const handleStopScan = () => {
+    console.log("Scan Stopped");
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 350);
@@ -50,8 +69,23 @@ export default function AntivirusPage() {
               </div>
               <Badge color={mode.accent}>{mode.status}</Badge>
             </div>
-            <button className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-[#0f1728] px-4 py-3 text-sm font-semibold text-white transition hover:bg-hover">
-              Start scan
+            <button
+              onClick={
+              mode.label === "Quick Scan"                                                                                      
+              ? handleQuickScan
+              : mode.label === "Full Scan"
+              ? handleFullScan
+              : mode.label === "Custom Scan"
+              ? handleCustomScan
+              : handleStopScan
+             }
+              className="mt-6 inline-flex w-full items-center justify-center rounded-3xl bg-[#0f1728] px-4 py-3 text-sm font-semibold text-white transition hover:bg-hover"
+            >
+              {mode.label === "Real-time Protection"
+              ? "Toggle"
+              : mode.label === "Quarantine"
+              ? "Open"
+              : "Start Scan"}
             </button>
           </Card>
         ))}
